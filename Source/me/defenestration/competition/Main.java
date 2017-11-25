@@ -85,7 +85,6 @@ public class Main {
             }
         });
 
-        int tick = 0;
         while (channel.isConnected()) {
             response = getResponse();
             if (response == null)
@@ -98,23 +97,57 @@ public class Main {
             graphics = bufferStrategy.getDrawGraphics();
             graphics.clearRect(0, 0, 500, 600);
 
+            int filled = 0;
+
             ListList.Reader<StructList.Reader<ResponseClass.Cell.Reader>> cells = response.getCells();
             for (int x = 0; x < 80; x++) {
                 StructList.Reader<ResponseClass.Cell.Reader> row = cells.get(x);
                 for (int y = 0; y < 100; y++) {
                     int brightness = row.get(y).getOwner() * 20;
                     graphics.setColor(new Color(brightness, brightness, brightness));
+                    if (brightness == 0)
+                        filled++;
                     if (row.get(y).getAttack().isUnit())
                         graphics.setColor(Color.pink);
                     graphics.fillRect(x * 5, y * 5, 5, 5);
                 }
             }
 
-            graphics.setColor(Color.RED);
 
             StructList.Reader<ResponseClass.Enemy.Reader> enemies = response.getEnemies();
             for (ResponseClass.Enemy.Reader enemy : enemies) {
                 CommonClass.Position.Reader pos = enemy.getPosition();
+                int xx = pos.getX();
+                int yy = pos.getY();
+                int vx = enemy.getDirection().getVertical() == CommonClass.Direction.UP ? -1 : 1;
+                int vy = enemy.getDirection().getHorizontal() == CommonClass.Direction.LEFT ? -1 : 1;
+                for (int i = 0; i < 20; i++) {
+                    xx += vx;
+                    yy += vy;
+                    if (xx < 2) {
+                        xx++;
+                        vx *= -1;
+                        yy -= vy;
+                    }
+                    if (xx > 77) {
+                        xx--;
+                        vx *= -1;
+                        yy -= vy;
+                    }
+                    if (yy < 2) {
+                        yy++;
+                        vy *= -1;
+                        xx -= vx;
+                    }
+                    if (yy > 97) {
+                        yy--;
+                        vy *= -1;
+                        xx -= vx;
+                    }
+                    graphics.setColor(Color.LIGHT_GRAY);
+                    graphics.fillRect(xx * 5, yy * 5, 5, 5);
+                }
+                graphics.setColor(Color.RED);
                 graphics.fillRect(pos.getX() * 5, pos.getY() * 5, 5, 5);
             }
 
@@ -125,8 +158,6 @@ public class Main {
                 CommonClass.Position.Reader pos = unit.getPosition();
                 graphics.fillRect(pos.getX() * 5, pos.getY() * 5, 5, 5);
             }
-
-            //ArrayList<CommandClass.Move.Builder> moves = new ArrayList<>();
 
             MessageBuilder message = new MessageBuilder();
 
@@ -144,6 +175,33 @@ public class Main {
             if (direction == CommonClass.Direction.RIGHT && pos.getY() == 99)
                 direction = CommonClass.Direction.LEFT;
 
+            int vx = 0;
+            int vy = 0;
+            if (direction == CommonClass.Direction.LEFT)
+                vy = -1;
+            if (direction == CommonClass.Direction.RIGHT)
+                vy = 1;
+            if (direction == CommonClass.Direction.UP)
+                vx = -1;
+            if (direction == CommonClass.Direction.DOWN)
+                vx = 1;
+            int xx = units.get(0).getPosition().getX();
+            int yy = units.get(0).getPosition().getY();
+            for (int i = 0; i < 20; i++) {
+                graphics.setColor(new Color(0, 0, 100));
+                graphics.fillRect(xx * 5, yy * 5, 5, 5);
+                xx += vx;
+                yy += vy;
+            }
+
+
+            graphics.setColor(Color.GREEN);
+
+            for (ResponseClass.Unit.Reader unit : units) {
+                pos = unit.getPosition();
+                graphics.fillRect(pos.getX() * 5, pos.getY() * 5, 5, 5);
+            }
+
             moves.get(0).setDirection(direction);
             moves.get(0).setUnit(0);
 
@@ -160,7 +218,7 @@ public class Main {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println(++tick);
+            System.out.println(response.getInfo().getTick() + "/" + (1000 + (response.getInfo().getLevel() % 500) * 10) + " " + (100 - filled / 80f) + "%");
         }
     }
 
