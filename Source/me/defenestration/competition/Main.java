@@ -40,6 +40,7 @@ public class Main {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(false);
         frame.setVisible(true);
+        frame.setFocusable(true);
 
         Canvas canvas = new Canvas();
         canvas.setSize(500, 600);
@@ -54,7 +55,7 @@ public class Main {
         BufferStrategy bufferStrategy;
         Graphics graphics;
 
-        frame.addKeyListener(new KeyListener() {
+        canvas.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
 
@@ -84,6 +85,7 @@ public class Main {
             }
         });
 
+        int tick = 0;
         while (channel.isConnected()) {
             response = getResponse();
             if (response == null)
@@ -102,6 +104,8 @@ public class Main {
                 for (int y = 0; y < 100; y++) {
                     int brightness = row.get(y).getOwner() * 20;
                     graphics.setColor(new Color(brightness, brightness, brightness));
+                    if (row.get(y).getAttack().isUnit())
+                        graphics.setColor(Color.pink);
                     graphics.fillRect(x * 5, y * 5, 5, 5);
                 }
             }
@@ -131,6 +135,15 @@ public class Main {
             CommandClass.Command.Commands.Builder command = commandBuilder.initCommands();
 
             StructList.Builder<CommandClass.Move.Builder> moves = command.initMoves(1);
+
+            CommonClass.Position.Reader pos = units.get(0).getPosition();
+            if (direction == CommonClass.Direction.LEFT && pos.getY() == 0 ||
+                    direction == CommonClass.Direction.UP && pos.getX() == 0 ||
+                    direction == CommonClass.Direction.DOWN && pos.getX() == 99)
+                direction = CommonClass.Direction.RIGHT;
+            if (direction == CommonClass.Direction.RIGHT && pos.getY() == 99)
+                direction = CommonClass.Direction.LEFT;
+
             moves.get(0).setDirection(direction);
             moves.get(0).setUnit(0);
 
@@ -142,6 +155,12 @@ public class Main {
 
             bufferStrategy.show();
             graphics.dispose();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(++tick);
         }
     }
 
