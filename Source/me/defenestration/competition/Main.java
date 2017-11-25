@@ -2,9 +2,11 @@ package me.defenestration.competition;
 
 import org.capnproto.*;
 
+import java.awt.*;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
@@ -14,7 +16,7 @@ public class Main {
 	public static void main (String[] args) {
 		try {
 			channel = SocketChannel.open();
-			channel.connect(new InetSocketAddress("ecovpn.dyndns.org", 11223));
+			channel.connect(new InetSocketAddress("epb2017.dyndns.org", 11224));
 
 		} catch (Exception e) {
 			System.out.println("main: " + e);
@@ -36,33 +38,6 @@ public class Main {
 			System.out.println(responseToString(response));
 
 			String msg;
-
-			if (response.getStatus().toString().equals("Congratulation! You fixed all the bugs!")) {
-				msg = "I solved a huge amount of bug. I am proud of myself.";
-				bugsSolved++;
-				bugs = bugsSolved;
-			} else {
-				msg = "Fixed";
-				if (response.getBugfix().getBugs() != 0)
-					bugs = response.getBugfix().getBugs();
-			}
-			messages.add(msg);
-
-			//Checking if connection should be closed------------------------
-			if (response.getEnd() || messages.size() == 0) {
-				try {
-					channel.close();
-				} catch (Exception e) {
-					System.out.println("channel.close(): " + e);
-				}
-				break;
-			}
-
-			//Send message---------------------------------------------------
-			String m = messages.remove(0);
-			bugs--;
-			bugsSolved++;
-			sendRequest(bugs, m);
 		}
 	}
 
@@ -76,25 +51,24 @@ public class Main {
 		return null;
 	}
 
-	private static void sendRequest(byte count, String msg) {
+	private static void sendCommand(ArrayList<CommandClass.Move.Builder> moves) {
 		MessageBuilder msgBuilder = new MessageBuilder();
-		RequestClass.Request.Builder bugfixRequest = msgBuilder.initRoot(RequestClass.Request.factory);
-		BugfixClass.Bugfix.Builder bugfix = bugfixRequest.initBugfix();
-		bugfix.setBugs(count);
-		bugfix.setMessage(msg);
+		CommandClass.Command.Builder command = msgBuilder.initRoot(CommandClass.Command.factory);
+		CommandClass.Command.Commands.Builder commands = command.initCommands();
+		org.capnproto.StructList.Builder<CommandClass.Move.Builder> moveList = commands.initMoves(moves.size());
 
-		System.out.println("Sending request...");
-		try {
-			Serialize.write(channel, msgBuilder);
-		} catch (Exception e) {
-			System.out.println("sendRequest: " + e);
+		for (int i = 0; i < moves.size(); i++) {
+			CommandClass.Move.Builder move = moveList.get(i);
+			move.setUnit(0);
+			move.setDirection(moves.get(i).getDirection());
 		}
 	}
 
 	private static void sendLogin() {
 		MessageBuilder msgBuilder = new MessageBuilder();
-		RequestClass.Request.Builder loginRequest = msgBuilder.initRoot(RequestClass.Request.factory);
-		RequestClass.Request.Login.Builder login = loginRequest.getLogin();
+		CommandClass.Command.Builder loginRequest = msgBuilder.initRoot(CommandClass.Command.factory);
+		CommandClass.Command.Commands.Builder commands = loginRequest.initCommands();
+		CommandClass.Command.Commands.Login.Builder login = commands.initLogin();
 		login.setTeam("defenestration");
 		login.setHash("6ilwor8e6t3yv2kwvbwu5d5obl1upmu2ywteh");
 
@@ -108,11 +82,11 @@ public class Main {
 
 	private static String responseToString (ResponseClass.Response.Reader response) {
 		return "┌-Response---------------------------------------------------------------\n" +
-			   "|End: " + response.getEnd() + '\n' +
 			   "|Status: " + response.getStatus() + '\n' +
 			   "|Bugfix:\n" +
-			   "|  Bugs: " + response.getBugfix().getBugs() + '\n' +
-			   "|  Message: " +response.getBugfix().getMessage() + '\n' +
+			   "|  Occupied: " + response.getInfo().getOwns() + '\n' +
+			   "|  Level: " +response.getInfo().getLevel() + '\n' +
+			   "|  Tick: " +response.getInfo().getTick() + '\n' +
 			   "└------------------------------------------------------------------------";
 	}
 }
