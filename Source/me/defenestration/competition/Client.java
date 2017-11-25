@@ -2,57 +2,48 @@ package me.defenestration.competition;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class Client {
-	Socket client;
-	BufferedReader input;
-	DataOutputStream output;
+    private Socket client;
+    private BufferedReader input;
+    private DataOutputStream output;
 
-	public Client (String host, int port) {
-		try {
-			client = new Socket(host, port);
-		} catch (Exception e) {
-			System.out.println(e);
-		}
+    public Client(String host, int port) {
+        try {
+            client = new Socket(host, port);
 
-		try {
-			DataInputStream is = new DataInputStream(client.getInputStream());
-			input = new BufferedReader(new InputStreamReader(is));
-		} catch (Exception e) {
-			System.out.println(e);
-		}
+            DataInputStream is = new DataInputStream(client.getInputStream());
+            input = new BufferedReader(new InputStreamReader(is));
 
-		try {
-		    output = new DataOutputStream(client.getOutputStream());
-        } catch (Exception e) {
-            System.out.println(e);
+            output = new DataOutputStream(client.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-	}
+    }
 
-	public void write (String msg) {
-	    try {
+    public void write(String msg) {
+        try {
             output.writeBytes(msg);
-        } catch (Exception e) {
-	        System.out.println(e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    public String readLine () {
-	    try {
-	        return input.readLine();
-        } catch (Exception e) {
-	        return null;
+    public String readLine() {
+        try {
+            return input.readLine();
+        } catch (IOException e) {
+            return null;
         }
     }
 
-	public void close () {
-	    try {
+    public void close() {
+        try {
             output.close();
             input.close();
             client.close();
         } catch (IOException e) {
-	        System.out.println(e);
+            e.printStackTrace();
         }
     }
 }
