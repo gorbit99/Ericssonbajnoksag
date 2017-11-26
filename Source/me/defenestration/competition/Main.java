@@ -96,16 +96,20 @@ public class Main {
                 if (level < response.getInfo().getLevel()) {
 
                     if (!replaying && level > -1) {
-                        File out = new File(level + ".txt");
+                        File out = new File( level + ".txt");
                         out.createNewFile();
                         BufferedWriter writer = new BufferedWriter(new FileWriter(out));
 
-                        ArrayList<String> outData = new ArrayList<>();
+                        StringBuilder builder = new StringBuilder();
+                        int count = 0;
                         for (CommonClass.Direction d : replay) {
-                            outData.add(d.toString());
+                            if (count != 0)
+                                builder.append(",");
+                            builder.append(d.toString());
+                            count++;
                         }
 
-                        writer.write(StringUtils.join(outData, ","));
+                        writer.write(builder.toString());
                         writer.flush();
                         writer.close();
                     }
@@ -115,8 +119,6 @@ public class Main {
 
                     replaying = false;
                     replay.clear();
-
-                    System.out.println(level + ".txt");
                     if (file.exists()) {
                         replaying = true;
                         BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -130,6 +132,7 @@ public class Main {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                frame.setTitle(e.getMessage());
             }
 
             bufferStrategy = canvas.getBufferStrategy();
