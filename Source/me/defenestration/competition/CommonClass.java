@@ -5,11 +5,27 @@ package me.defenestration.competition;
 
 public final class CommonClass {
     public enum Direction {
-        UP,
-        LEFT,
-        DOWN,
-        RIGHT,
-        _NOT_IN_SCHEMA,
+        UP(0),
+        LEFT(1),
+        DOWN(2),
+        RIGHT(3),
+        _NOT_IN_SCHEMA(4);
+
+        private static Direction[] lookup = new Direction[] { UP, LEFT, DOWN, RIGHT, _NOT_IN_SCHEMA };
+        private int id;
+
+        Direction(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return this.id + "";
+        }
+
+        public static Direction parse(int i) {
+            return lookup[i];
+        }
     }
 
     public static class Position {
